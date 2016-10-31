@@ -1,17 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import time, sys, string, json
 import urllib, urllib2, hashlib, os
 import itertools, mimetools, mimetypes
-from watchdog.observers import Observer  
-from watchdog.events import PatternMatchingEventHandler
 
-
-# Kicks shit dropped by skids on yr honeypots over to yr Viper/Snakepit instance
 PRINTABLE_CHARACTERS = string.letters + string.digits + string.punctuation + " "
 VIPER_URL_ADD = "http://viper:8080/file/add"
-
 
 def convert2printable(s):
     if not isinstance(s, basestring) or isPrintable(s):
@@ -39,6 +31,14 @@ def get_sha256(fileName):
         for chunk in iter(lambda: f.read(4096), ""):
             hash.update(chunk)
     return hash.hexdigest()
+
+
+def getTelnetPid(self):
+    pids = [pid for pid in os.listdir('/proc') if pid.isdigit()]
+    for pid in pids:
+        leProc = open('/proc/%s/cmdline' % pid).read().split('\0')
+        if leProc[0] is '/bin/telnetd':
+            return int(pid)
 
 
 def convertDirtyDict2ASCII(data):
@@ -144,88 +144,27 @@ class MultiPartForm(object):
         return '\r\n'.join(flattened)
 
 
-class FileHandler(PatternMatchingEventHandler):
-
-    def process(self, event):
-        #shutil.copy2(event.src_path, '/tmp')        
-
-        if event.is_directory is False and os.path.exists(event.src_path) and os.path.basename(event.src_path).startswith('.') is False and event.src_path is not '/var/run/utmp' and os.path.getsize(event.src_path) != 0:
-            self.upload(event.src_path)
-            fileName = os.path.basename(event.src_path)
-            sha256 = get_sha256(event.src_path)
-            print '[!] Sending ' + event.src_path + ' to Viper\n[!] sha256: ' + sha256
-            self.binsFromProc(sha256, 0)
-
-
-    def binsFromProc(self, sha256, passes):
-        pids = [pid for pid in os.listdir('/proc') if pid.isdigit()]
-        if passes <= 1:
-            for pid in pids:
-                try:
-                    leProc = open('/proc/%s/cmdline' % pid).read().split('\0')
-                    if pid is os.getpid() or pid is '1' or 'telnetd' in leProc or 'python' in leProc or 'dbus' in leProc:
-                        pass
-                    else:
-                        self.upload(os.path.join('/proc', pid, 'exe'))
-                        #fileName = open('/proc/%s/cmdline' % pid).read().split('\0')
-                        print '[!] Sending from /proc/pid/exe: ' + sha256
-                        os.system('killall $(cat /proc/%s/cmdline) 2>/dev/null' % pid) 
-                except IOError: # proc has already terminated
-                    pass
-            passes = passes + 1
-            self.binsFromProc(sha256, passes)
-        else:
-            time.sleep(15)
-            os.system('telnetd 0.0.0.0:23')
-
-
-    # LOG THY TTY?
-    def on_modified(self, event):
-        self.process(event)
-
-
-    def on_created(self, event):
-        self.process(event)
-      
-
-    def upload(self, filePath):
-        rawFile = open(filePath, 'rb')
-
-        try:
-            form = MultiPartForm()
-            form.add_file('file', filePath, fileHandle=rawFile)
-            form.add_field('tags', 'busypot')
-        
-            request = urllib2.Request(VIPER_URL_ADD)
-            body = str(form)
-
-            request.add_header('Content-type', form.get_content_type())
-            request.add_header('Content-length', len(body))
-            request.add_data(body)
-        
-            response_data = urllib2.urlopen(request).read() 
-            reponsejson = json.loads(response_data)
-            
-        except urllib2.URLError as e:
-            print "[!] File already exists: %s" % e
-            pass
-        except ValueError as e:
-            print "Unable to convert response to JSON: %s" % e
-            pass
-
-
-if __name__ == '__main__':
-    args = sys.argv[1:]
-    
-    print "starting application in 3...2...jk it's already started"
-    observer = Observer()
-    observer.schedule(FileHandler(), path=args[0] if args else '/', recursive=False)
-    observer.start()
+def upload(filePath):
+    rawFile = open(filePath, 'rb')
 
     try:
-        while True:
-            time.sleep(0.000001)
-    except KeyboardInterrupt:
-        observer.stop()
+        form = MultiPartForm()
+        form.add_file('file', filePath, fileHandle=rawFile)
+        form.add_field('tags', 'mehrai')
+    
+        request = urllib2.Request(VIPER_URL_ADD)
+        body = str(form)
 
-    observer.join()
+        request.add_header('Content-type', form.get_content_type())
+        request.add_header('Content-length', len(body))
+        request.add_data(body)
+    
+        response_data = urllib2.urlopen(request).read() 
+        reponsejson = json.loads(response_data)
+        
+    except urllib2.URLError as e:
+        print "[!] File already exists: %s" % e
+        pass
+    except ValueError as e:
+        print "Unable to convert response to JSON: %s" % e
+        pass
