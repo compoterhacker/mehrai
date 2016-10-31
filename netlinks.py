@@ -42,7 +42,7 @@ class cn_msg(Structure):
         ('id', cb_id),
         ('seq', c_uint),
         ('ack', c_uint),
-        ('len', c_ushort),
+        ('len', c_uint),
         ('flags', c_ushort),
     ]
 
