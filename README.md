@@ -13,9 +13,11 @@ To use this version:
 ```
 And then from your host:
 ```
-# python mehrai.py run $(docker ps -l --no-trunc) [--recurse, --monitor]
+# python mehrai.py run $(docker ps -l --no-trunc | grep 'mehrai' | awk '{print $1}') [--recurse, --monitor]
 ```
 Note: Depending on the version of Docker, you may get a Path status error. In which case, you will have to change the path in mehra.py to the correct one for your install :)
+
+Then it should start spitting out events as seem below. If you don't see this, then something is broken and you will have to troubleshoot by yourself... cuz I AIN'T DOIN SHIT ;)
 ```
  - process exe:
  - process cmdline:
