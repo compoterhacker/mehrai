@@ -19,9 +19,10 @@ class FileHandler(PatternMatchingEventHandler):
 
         if event.is_directory is False and os.path.exists(event.src_path) and os.path.basename(event.src_path).startswith('.') is False and os.path.getsize(event.src_path) != 0:
             rand = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
-            os.system("cp " + event.src_path + " /tmp/" + event.src_path + "." + rand)
+            os.system("cp " + event.src_path + " /tmp/" + os.path.basename(event.src_path + '.' + rand))
+            sha256 = utils.get_sha256(event.src_path)
             print '[!] Sending ' + event.src_path + '.' + rand + ' to Viper\n[!] sha256: ' + sha256
-            utils.upload("/tmp/" + event.src_path + '.' + rand)
+            utils.upload("/tmp/" + os.path.basename(event.src_path + '.' + rand))
 
 
     def on_modified(self, event):
@@ -47,6 +48,7 @@ def run(dockerid, monitor=False, recurse=False):
 
     connector = netlinks.NetlinkConnector()
     observer = Observer()
+    # this line may need to be changed, dending on yr docker install
     observer.schedule(FileHandler(), path='/var/lib/docker/devicemapper/mnt/' + dockerid + '/rootfs', recursive=recurse)
     observer.start()
 
