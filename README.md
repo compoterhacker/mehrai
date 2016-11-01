@@ -13,9 +13,9 @@ To use this version:
 ```
 And then from your host:
 ```
-# python mehrai.py run untruncated-docker-id-here [--recurse, --monitor]
+# python mehrai.py run $(docker ps -l --no-trunc) [--recurse, --monitor]
 ```
-
+Note: Depending on the version of Docker, you may get a Path status error. In which case, you will have to change the path in mehra.py to the correct one for your install :)
 ```
  - process exe:
  - process cmdline:
