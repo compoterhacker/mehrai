@@ -1,9 +1,9 @@
 import time, sys, string, json
 import urllib, urllib2, hashlib, os
-import itertools, mimetools, mimetypes
-
+import itertools, mimetools, mimetypes, pipes
 PRINTABLE_CHARACTERS = string.letters + string.digits + string.punctuation + " "
 VIPER_URL_ADD = "http://viper:8080/file/add"
+
 
 def convert2printable(s):
     if not isinstance(s, basestring) or isPrintable(s):
@@ -39,6 +39,10 @@ def getTelnetPid(self):
         leProc = open('/proc/%s/cmdline' % pid).read().split('\0')
         if leProc[0] is '/bin/telnetd':
             return int(pid)
+
+
+def args_to_string(args):
+    return ' '.join(map(lambda x: pipes.quote(str(x)), args) or [])
 
 
 def convertDirtyDict2ASCII(data):
