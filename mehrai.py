@@ -17,8 +17,9 @@ from watchdog.events import PatternMatchingEventHandler
 class FileHandler(PatternMatchingEventHandler):
 
     def process(self, event):
-
+        #wordchars += '@{}~-./*?=$:+^'
         fileName = os.path.basename(event.src_path)
+
 
         if event.is_directory is False and os.path.exists(event.src_path) and os.path.basename(event.src_path).startswith('.') is False and os.path.getsize(event.src_path) != 0:
             rand = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
@@ -85,12 +86,14 @@ def run(dockerid, monitor=False, recurse=False):
                         childpid = str(event['child_pid'])
                         print '   [!] killing %s' % childpid
                         rand = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
-                        args = ['cp', '/proc/' + childpid + '/exe', '/tmp/exe.' + rand]
-                        cp = subprocess.check_output(args, shell=False)
+                        path = '/proc/%s/exe' % childpid
+                        tmp = '/tmp/exe.%s' % rand
+                        cmd = ['cp', path, tmp]
+                        #args = utils.args_to_string(cmd)
+                        cp = subprocess.check_output(cmd, shell=False)
                         utils.upload('/tmp/exe.' + rand)
-                        time.sleep(1)
                         cmd = ['kill', '-9', childpid]
-                        args = utils.args_to_string(cmd)
+                        #args = utils.args_to_string(cmd)
                         proc = subprocess.check_output(cmd, shell=False)
                         cmd = ['docker', 'exec', dockerid, 'telnetd', '-b', '0.0.0.0:23']
                         args = utils.args_to_string(cmd)
@@ -117,4 +120,5 @@ def run(dockerid, monitor=False, recurse=False):
 
 if __name__ == "__main__":
     argh.dispatch_commands([run])
+
 
