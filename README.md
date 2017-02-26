@@ -8,8 +8,7 @@ The files are both picked off from docker's rootfs and /proc/pid/exe, except on 
 To use this version:
 ```
 # docker build -t honeypots/mehrai .
-# docker run -it --rm -p 23:23 honeypots/mehrai /bin/sh
-/ # telnetd -b 0.0.0.0:23 
+# docker run -dit --rm -p 23:23 honeypots/mehrai
 ```
 And then from your host:
 ```

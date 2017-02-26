@@ -8,4 +8,5 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.4/community" | tee /etc/apk/re
   chmod +x /bin/telnetd && \
   rm -f /etc/securetty
 EXPOSE 23
-
+CMD telnetd -b 0.0.0.0:23; \
+    /bin/sh
