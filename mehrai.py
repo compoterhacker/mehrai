@@ -42,7 +42,14 @@ class FileHandler(PatternMatchingEventHandler):
 @arg('dockerid', help='the untruncated dockerid for the container')
 @arg('--recurse', help='recursively monitor the filesystem. WARNING! NOISEY!')
 @arg('--monitor', help='monitor mode: not killing the procs, but just monitoring. pcap time.')
-def run(dockerid, monitor=False, recurse=False):
+@arg('--overlayfs', help='changes default storage device from devicemapper to overlay2 (requires special lookup process')
+
+def map_overlayfs(overlayid):
+    fsid = open('/var/lib/docker/image/overlay2/layerdb/mounts/'+overlayid+'/mount-id','r').read()
+    fspath = '/var/lib/docker/overlay2/'+fsid+'/diff'
+    return fspath
+
+def run(dockerid, monitor=False, recurse=False, overlayfs=False):
     print """\n
                 _               _ 
  _ __ ___   ___| |__  _ __ __ _(_)
@@ -52,10 +59,16 @@ def run(dockerid, monitor=False, recurse=False):
                                                                  
 \n"""
 
+    # default devicemapper
+    # this line may need to be changed, dending on yr docker install
+    fspath='/var/lib/docker/devicemapper/' + dockerid + '/diff'
+
+    if overlayfs:
+        fspath=map_overlayfs(dockerid)
+
     connector = netlinks.NetlinkConnector()
     observer = Observer()
-    # this line may need to be changed, dending on yr docker install
-    observer.schedule(FileHandler(), path='/var/lib/docker/devicemapper/mnt/' + dockerid + '/rootfs', recursive=recurse)
+    observer.schedule(FileHandler(), path=fspath, recursive=recurse)
     observer.start()
 
     telnet = utils.getTelnetPid
